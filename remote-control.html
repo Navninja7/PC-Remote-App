@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bluetooth PC Remote</title>
+<style>
+    .button {
+        width: 80px;
+        height: 80px;
+        font-size: 20px;
+        margin: 10px;
+        border-radius: 10px;
+        background-color: #4CAF50;
+        color: white;
+    }
+    #control-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 50px;
+    }
+    #arrow-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 300px;
+    }
+</style>
+</head>
+<body>
+    <div id="control-container">
+        <button id="connect-btn" class="button">Connect</button>
+        <div id="arrow-container">
+            <button id="up-btn" class="button">↑</button>
+            <button id="left-btn" class="button">←</button>
+            <button id="right-btn" class="button">→</button>
+            <button id="down-btn" class="button">↓</button>
+            <button id="click-btn" class="button">Click</button>
+        </div>
+    </div>
+
+    <script>
+        let controlCharacteristic;
+
+        // Helper function to send commands
+        async function sendCommand(command) {
+            if (!controlCharacteristic) return;
+            const encoder = new TextEncoder();
+            const data = encoder.encode(command);
+            await controlCharacteristic.writeValue(data);
+            console.log(`Sent command: ${command}`);
+        }
+
+        // Function to connect to the Bluetooth device
+        async function connectBluetooth() {
+            try {
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['12ab'] }]
+                });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService('12ab');
+                controlCharacteristic = await service.getCharacteristic('34cd');
+                console.log('Connected to Bluetooth device');
+            } catch (error) {
+                console.error('Failed to connect:', error);
+            }
+        }
+
+        // Set up button click listeners
+        document.getElementById('connect-btn').addEventListener('click', connectBluetooth);
+        document.getElementById('up-btn').addEventListener('click', () => sendCommand('UP'));
+        document.getElementById('down-btn').addEventListener('click', () => sendCommand('DOWN'));
+        document.getElementById('left-btn').addEventListener('click', () => sendCommand('LEFT'));
+        document.getElementById('right-btn').addEventListener('click', () => sendCommand('RIGHT'));
+        document.getElementById('click-btn').addEventListener('click', () => sendCommand('CLICK'));
+    </script>
+</body>
+</html>
